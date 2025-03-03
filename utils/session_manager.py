@@ -7,6 +7,8 @@ def initialize_session_store():
        Side Effect: Modifies Streamlit session state with empty store dictionary"""
     if 'store' not in st.session_state:
         st.session_state.store = {}
+    if 'chat_history' not in st.session_state:
+        st.session_state.chat_history = []
 
 def get_session_history(store, session_id: str) -> BaseChatMessageHistory:
     """Retrieves or creates chat history for a given session ID.
