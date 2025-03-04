@@ -12,3 +12,11 @@ def display_chat_history():
 def chat_input(disabled=False):
     """Displays chat input box"""
     return st.chat_input("Your question:", disabled=disabled, key="user_input")
+
+def display_sidebar():
+    with st.sidebar:
+        st.header("Configuration")
+        api_key = st.text_input("Groq API Key", type="password")
+        session_id = st.text_input("Session ID", value="default_session")
+        uploaded_file = st.file_uploader("Upload PDF", type="pdf")
+        return api_key, session_id, uploaded_file
