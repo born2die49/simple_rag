@@ -1,3 +1,5 @@
+import os
+import shutil
 import streamlit as st
 from dotenv import load_dotenv
 from config.settings import get_embedding_model
@@ -38,15 +40,34 @@ def main():
         handle_user_input(user_input, session_id)
 
 def process_document(uploaded_file, api_key, session_id):
-    """Process uploaded document and initialize RAG chain"""
-    if 'rag_chain' not in st.session_state:
+    """Handle document processing with comprehensive validation"""
+    try:
+        if not uploaded_file:
+            return
+
+        # Reset state for new documents
+        current_file = st.session_state.get('current_file')
+        if current_file != uploaded_file.name:
+            reset_document_state()
+            st.session_state.current_file = uploaded_file.name
+            st.session_state.chat_history = []
+
+        # Validate document processing
         documents = handle_pdf_upload(uploaded_file)
+        if not documents:
+            raise ValueError("Failed to process PDF document")
+
+        # Split with metadata preservation
         text_splitter = get_text_splitter()
         splits = text_splitter.split_documents(documents)
-        
+        if not splits or len(splits) == 0:
+            raise ValueError("Document splitting failed - no text chunks created")
+
+        # Create vector store
         embedding_model = get_embedding_model()
         retriever = create_vector_store(splits, embedding_model)
-        
+
+        # Initialize LLM and chains
         answer_llm = initialize_answer_llm(api_key)
         rag_chain = initialize_retriever(answer_llm, retriever)
         
@@ -54,6 +75,19 @@ def process_document(uploaded_file, api_key, session_id):
             rag_chain,
             lambda session_id: get_session_history(st.session_state.store, session_id)
         )
+
+    except Exception as e:
+        st.error(f"Document processing failed: {str(e)}")
+        reset_document_state()
+        st.session_state.chat_history = []
+        raise
+        
+def reset_document_state():
+    """Clears document-related session state while preserving chat history"""
+    keys_to_clear = ['rag_chain', 'current_file', 'store', 'chat_history']
+    for key in keys_to_clear:
+        if key in st.session_state:
+            del st.session_state[key]
 
 def handle_user_input(user_input, session_id):
     """Process user input and update chat history"""

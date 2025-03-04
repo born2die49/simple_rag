@@ -1,7 +1,8 @@
 streamlit
 langchain-core
 langchain-groq
-langchain-chroma==0.1.4
+langchain-chroma==0.2.0
+chromadb==0.4.15
 langchain-huggingface
 langchain-ollama
 langchain-text-splitters

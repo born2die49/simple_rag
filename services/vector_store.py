@@ -1,15 +1,24 @@
 from langchain_chroma import Chroma
+from chromadb import EphemeralClient
+import uuid
 
 def create_vector_store(splits, embeddings):
-    """Creates and returns a vector store retriever from document splits.
-       Args:
-           splits (List[Document]): Text chunks for vectorization
-           embeddings: Embeddings model for vector creation
-       Returns: Retriever - Vector store interface for similarity searches"""
-    vectorestore = Chroma.from_documents(
+    """Create vector store with guaranteed valid IDs"""
+    # Generate robust IDs with multiple fallbacks
+    ids = []
+    for i, split in enumerate(splits):
+        doc_id = (
+            split.metadata.get("doc_uuid") or 
+            split.metadata.get("source") or 
+            str(uuid.uuid4())
+        )
+        ids.append(f"{doc_id}_chunk{i}")
+    
+    # Create collection with explicit validation
+    return Chroma.from_documents(
+        client=EphemeralClient(),
         documents=splits,
         embedding=embeddings,
-        collection_name="rag_collection",
-        persist_directory="./chroma_db"
-    )
-    return vectorestore.as_retriever()
+        ids=ids,
+        collection_name=f"coll_{uuid.uuid4().hex}",
+    ).as_retriever()
