@@ -21,8 +21,18 @@ def main():
     
     # Handle file upload and processing
     if uploaded_file and api_key:
-        process_document(uploaded_file, api_key, session_id)
-    
+        current_file_name = uploaded_file.name if uploaded_file else None
+        
+        # Check if a new file is uploaded
+        if current_file_name != st.session_state.previous_file_name:
+            # Reset processing flag for new file
+            st.session_state.file_processed = False
+            st.session_state.previous_file_name = current_file_name  # Update stored filename
+        # Process the file only if not already processed
+        if not st.session_state.file_processed:
+            process_document(uploaded_file, api_key, session_id)
+            st.session_state.file_processed = True  # Mark as processed
+            
     # Always show chat input (disabled until ready)
     user_input = chat_input(disabled=not (uploaded_file and api_key))
     if user_input:

@@ -9,6 +9,10 @@ def initialize_session_store():
         st.session_state.store = {}
     if 'chat_history' not in st.session_state:
         st.session_state.chat_history = []
+    if 'file_processed' not in st.session_state:
+        st.session_state.file_processed = False  # New flag
+    if 'previous_file_name' not in st.session_state:
+        st.session_state.previous_file_name = None  # Track last processed file
 
 def get_session_history(store, session_id: str) -> BaseChatMessageHistory:
     """Retrieves or creates chat history for a given session ID.
