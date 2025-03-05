@@ -7,7 +7,7 @@ from services.llm_service import initialize_answer_llm
 from services.retriever_service import initialize_retriever
 from services.vector_store import create_vector_store
 from utils.session_manager import get_session_history
-from utils.text_processing import get_text_splitter
+from utils.text_processing import determine_chunk_params, get_text_splitter
 
 
 def process_document(uploaded_file, api_key, session_id):
@@ -27,9 +27,16 @@ def process_document(uploaded_file, api_key, session_id):
         documents = handle_pdf_upload(uploaded_file)
         if not documents:
             raise ValueError("Failed to process PDF document")
+        
+        # Calculate average text length per page (heuristic for density)
+        total_text_length = sum(len(document.page_content) for document in documents)
+        avg_text_length = total_text_length / len(documents) if documents else 0
+
+        # Determine chunk parameters based on density
+        chunk_size, chunk_overlap = determine_chunk_params(avg_text_length)
 
         # Split with metadata preservation
-        text_splitter = get_text_splitter()
+        text_splitter = get_text_splitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
         splits = text_splitter.split_documents(documents)
         if not splits or len(splits) == 0:
             raise ValueError("Document splitting failed - no text chunks created")

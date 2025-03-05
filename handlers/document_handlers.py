@@ -1,13 +1,13 @@
 import os
 import tempfile
 import uuid
-from langchain.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyPDFLoader
+from utils.text_processing import clean_text
 
 def handle_pdf_upload(uploaded_file):
     """Process PDF with guaranteed metadata and content validation"""
     try:
         # Existing file handling
-        documents = []
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
             temp_file.write(uploaded_file.getvalue())
             temp_path = temp_file.name
@@ -18,6 +18,10 @@ def handle_pdf_upload(uploaded_file):
         # Validate loaded content
         if not docs or len(docs) == 0:
             raise ValueError("PDF contains no readable content")
+        
+        # Clean text for each document
+        for doc in docs:
+            doc.page_content = clean_text(doc.page_content)  # Apply cleaning
             
         # Add robust metadata
         doc_uuid = str(uuid.uuid4())
