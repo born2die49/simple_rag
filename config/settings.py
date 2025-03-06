@@ -1,11 +1,11 @@
-from langchain_ollama import OllamaEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_groq import ChatGroq
 
 def get_embedding_model():
     """Configuration for document embedding model (Ollama gemma2:2b)
        Returns: 
            OllamaEmbeddings - Lightweight model for vector transformations"""
-    return OllamaEmbeddings(model="gemma2:2b")
+    return HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
 def get_answer_model(api_key: str):
     """Configuration for answer generation model (Groq gemma2-9b-it)

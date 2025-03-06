@@ -2,7 +2,7 @@ from langchain_chroma import Chroma
 from chromadb import EphemeralClient
 import uuid
 
-def create_vector_store(splits, embeddings):
+def create_chroma_vector_store(splits, embeddings):
     """Create vector store with guaranteed valid IDs"""
     # Generate robust IDs with multiple fallbacks
     ids = []

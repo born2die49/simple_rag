@@ -1,10 +1,15 @@
-streamlit
+streamlit==1.42.2
+langchain
+langchain_community
 langchain-core
 langchain-groq
 langchain-chroma==0.2.0
 chromadb==0.4.15
 langchain-huggingface
+sentence-transformers
 langchain-ollama
 langchain-text-splitters
 PyPDF
 chromadb
+pinecone
+langchain_pinecone

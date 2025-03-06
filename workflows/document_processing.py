@@ -5,7 +5,7 @@ from config.settings import get_embedding_model
 from handlers.document_handlers import handle_pdf_upload
 from services.llm_service import initialize_answer_llm
 from services.retriever_service import initialize_retriever
-from services.vector_store import create_vector_store
+from services.pinecone_vector_store import create_vector_store
 from utils.session_manager import get_session_history
 from utils.text_processing import determine_chunk_params, get_text_splitter
 
