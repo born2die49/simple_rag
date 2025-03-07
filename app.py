@@ -4,7 +4,7 @@ from config import settings
 from handlers.interaction_handlers import handle_user_input
 from utils.session_manager import initialize_session_store
 from ui.components import display_chat_history, chat_input, display_sidebar
-from workflows.document_processing import process_document  # New UI components
+from workflows.document_processing import process_document
 
 load_dotenv()
 
