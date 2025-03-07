@@ -1,6 +1,8 @@
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_groq import ChatGroq
 
+MAX_UPLOAD_SIZE_MB = 50  # Default to 50MB limit
+
 def get_embedding_model():
     """Configuration for document embedding model (Ollama gemma2:2b)
        Returns: 
