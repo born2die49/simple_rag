@@ -5,7 +5,8 @@ from config.settings import get_embedding_model
 from handlers.document_handlers import handle_pdf_upload
 from services.llm_service import initialize_answer_llm
 from services.retriever_service import initialize_retriever
-from services.pinecone_vector_store import create_vector_store
+from services.pinecone_vector_store import create_pinecone_vector_store, get_pinecone_retriever
+from utils.file_utils import compute_file_hash, load_processed_files, save_processed_files
 from utils.session_manager import get_session_history
 from utils.text_processing import determine_chunk_params, get_text_splitter
 
@@ -15,37 +16,49 @@ def process_document(uploaded_file, api_key, session_id):
     try:
         if not uploaded_file:
             return
-
-        # Reset state for new documents
-        current_file = st.session_state.get('current_file')
-        if current_file != uploaded_file.name:
-            reset_document_state()
-            st.session_state.current_file = uploaded_file.name
-            st.session_state.chat_history = []
-
-        # Validate document processing
-        documents = handle_pdf_upload(uploaded_file)
-        if not documents:
-            raise ValueError("Failed to process PDF document")
         
-        # Calculate average text length per page (heuristic for density)
-        total_text_length = sum(len(document.page_content) for document in documents)
-        avg_text_length = total_text_length / len(documents) if documents else 0
+        file_hash = compute_file_hash(uploaded_file)
+        processed_hashes = load_processed_files()
+        
+        if file_hash in processed_hashes:
+            # File already processed, use existing Pinecone data
+            st.session_state.file_processed = True
+            embeddings = get_embedding_model()
+            retriever = get_pinecone_retriever(embeddings)
+            
+        else:
+            # New file: process and store hash, Reset state for new documents
+            current_file = st.session_state.get('current_file')
+            if current_file != uploaded_file.name:
+                reset_document_state()
+                st.session_state.current_file = uploaded_file.name
+                st.session_state.chat_history = []
 
-        # Determine chunk parameters based on density
-        chunk_size, chunk_overlap = determine_chunk_params(avg_text_length)
+            # Validate document processing
+            documents = handle_pdf_upload(uploaded_file)
+            if not documents:
+                raise ValueError("Failed to process PDF document")
+            
+            # Calculate average text length per page (heuristic for density)
+            total_text_length = sum(len(document.page_content) for document in documents)
+            avg_text_length = total_text_length / len(documents) if documents else 0
 
-        # Split with metadata preservation
-        text_splitter = get_text_splitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
-        splits = text_splitter.split_documents(documents)
-        if not splits or len(splits) == 0:
-            raise ValueError("Document splitting failed - no text chunks created")
+            # Determine chunk parameters based on density
+            chunk_size, chunk_overlap = determine_chunk_params(avg_text_length)
 
-        # Create vector store
-        embedding_model = get_embedding_model()
-        retriever = create_vector_store(splits, embedding_model)
+            # Split with metadata preservation
+            text_splitter = get_text_splitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+            splits = text_splitter.split_documents(documents)
+            if not splits or len(splits) == 0:
+                raise ValueError("Document splitting failed - no text chunks created")
 
-        # Initialize LLM and chains
+            # Create Pinecone vector store (upserts new data)
+            embedding_model = get_embedding_model()
+            retriever = create_pinecone_vector_store(splits, embedding_model)
+            processed_hashes.append(file_hash)
+            save_processed_files(processed_hashes)
+
+        # Initialize the conversational chain regardless of new/existing file
         answer_llm = initialize_answer_llm(api_key)
         rag_chain = initialize_retriever(answer_llm, retriever)
         

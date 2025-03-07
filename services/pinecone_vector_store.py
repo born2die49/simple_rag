@@ -1,11 +1,30 @@
 import os
 import uuid
-from pinecone import Pinecone as pcc
+from pinecone import Pinecone
 from langchain_pinecone import PineconeVectorStore
 
-def create_pinecone_vector_store(splits, embeddings):
+def get_pinecone_retriever(embeddings):
+    """Get Pinecone retriever without upserting new data."""
     # Initialize Pinecone client (configure API key and environment)
-    pc = pcc(
+    pinecone = Pinecone(
+        api_key=os.getenv("PINECONE_API_KEY"),  # Required
+    )
+    
+    index_name = "simple-rag"
+    pinecone_index = pinecone.Index(index_name)
+    
+    # Initialize Pinecone vector store wrapper
+    vector_store = PineconeVectorStore(
+        pinecone_index,  # Pinecone Index instance
+        embedding=embeddings,
+        text_key="text"  # Explicitly set text key
+    )
+    
+    return vector_store.as_retriever()
+
+def create_pinecone_vector_store(splits, embeddings):
+    """Upsert new documents into Pinecone."""
+    pinecone = Pinecone(                                                                    
         api_key=os.getenv("PINECONE_API_KEY"),  # Required
     )
     
@@ -32,7 +51,7 @@ def create_pinecone_vector_store(splits, embeddings):
     embeddings_list = embeddings.embed_documents(texts)
     
     # Upsert vectors with custom IDs using Pinecone client
-    pinecone_index = pc.Index(index_name)
+    pinecone_index = pinecone.Index(index_name)
     pinecone_index.upsert(
         vectors=[
             (
@@ -43,11 +62,4 @@ def create_pinecone_vector_store(splits, embeddings):
         ]
     )
     
-    # Initialize Pinecone vector store wrapper
-    vector_store = PineconeVectorStore(
-        pinecone_index,  # Pinecone Index instance
-        embedding=embeddings,
-        text_key="text"  # Explicitly set text key
-    )
-    
-    return vector_store.as_retriever()
+    return get_pinecone_retriever(embeddings)
