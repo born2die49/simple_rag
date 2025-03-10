@@ -2,6 +2,13 @@ from langchain_chroma import Chroma
 from chromadb import EphemeralClient
 import uuid
 
+def get_chroma_retriever(embeddings):
+    """Connect to existing Chroma vector store (ephemeral)"""
+    return Chroma(
+        client=EphemeralClient(),
+        embedding_function=embeddings,
+    ).as_retriever()
+
 def create_chroma_vector_store(splits, embeddings):
     """Create vector store with guaranteed valid IDs"""
     # Generate robust IDs with multiple fallbacks

@@ -4,12 +4,13 @@ from config import settings
 from handlers.interaction_handlers import handle_user_input
 from utils.session_manager import initialize_session_store
 from ui.components import display_chat_history, chat_input, display_sidebar
+from utils.sidebar_utils import display_vector_store_selection
 from workflows.document_processing import process_document
 
 load_dotenv()
 
 def main():
-    st.title("Conversational RAG with PDF Uploads")
+    st.title("Chatbot with PDF Uploads")
     
     # Initialize session state
     initialize_session_store()
@@ -19,6 +20,8 @@ def main():
     
     # Main chat interface
     display_chat_history()
+    
+    vector_store_type = display_vector_store_selection()
     
     # Handle file upload and processing
     if uploaded_file and api_key:
@@ -34,7 +37,7 @@ def main():
         st.session_state.previous_file_name = current_file_name  # Update stored filename
     # Process the file only if not already processed
     if not st.session_state.file_processed:
-        process_document(uploaded_file, api_key, session_id)
+        process_document(uploaded_file, api_key, session_id, vector_store_type)
         st.session_state.file_processed = True  # Mark as processed
             
     # Always show chat input (disabled until ready)
